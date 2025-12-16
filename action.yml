@@ -21,8 +21,8 @@ inputs:
 
   resolve_ndk:
     required: false
-    description: 'Should NDK be downloaded on restore'
-    default: 'false'
+    description: 'Should NDK be downloaded on restore. Will do nothing if NDK is already present. Will recycle existing NDK if present'
+    default: 'true'
 
   version:
     required: false

@@ -245,6 +245,37 @@ async function downloadQpmVersion(
   return execFile
 }
 
+async function ndkResolve(
+  qpmFilePath: string,
+  qpmBinaryPath: string,
+  cachePath: string,
+  parameters: ReturnType<typeof getActionParameters>
+): Promise<void> {
+  const qpm = await readQPM<QPMPackage>(qpmFilePath)
+  const ndk = qpm.workspace?.ndk
+
+  if (!ndk) {
+    core.info('No NDK specified in qpm.json, skipping NDK resolution')
+    return
+  }
+  const ndkCacheKey = `qpm-ndk-${ndk}`
+  const ndkPath = path.resolve(path.join(cachePath, '..', 'ndk'))
+  let cacheHit: string | undefined = undefined
+
+  if (parameters.cache) {
+    core.info(`Restoring NDK cache for ${ndk}`)
+    cacheHit = await cache.restoreCache([ndkPath], ndkCacheKey, ['qpm-ndk-'])
+  }
+
+  core.info(`Resolving NDK for ${ndk}`)
+  await githubExecAsync(qpmBinaryPath!, ['ndk', 'resolve', '-d'])
+
+  if (parameters.cache && !cacheHit) {
+    core.info(`Saving NDK cache for ${ndk}`)
+    await cache.saveCache([ndkPath], ndkCacheKey)
+  }
+}
+
 export async function run(): Promise<void> {
   try {
     const parameters = getActionParameters()
@@ -296,24 +327,7 @@ export async function run(): Promise<void> {
 
     // Resolve the NDK and download it if necessary
     if (resolveNdk) {
-      const qpm = await readQPM<QPMPackage>(qpmFilePath)
-      const ndk = qpm.workspace?.ndk
-      const ndkCacheKey = `qpm-ndk-${ndk}`
-      const ndkPath = path.resolve(path.join(cachePath, '..', 'ndk'))
-      let cacheHit: string | undefined = undefined
-
-      if (parameters.cache) {
-        core.info(`Restoring NDK cache for ${ndk}`)
-        cacheHit = await cache.restoreCache([ndkPath], ndkCacheKey, ['qpm-ndk-'])
-      }
-
-      core.info(`Resolving NDK for ${ndk}`)
-      await githubExecAsync(qpmBinaryPath!, ['ndk', 'resolve', '-d'])
-
-      if (parameters.cache && !cacheHit) {
-        core.info(`Saving NDK cache for ${ndk}`)
-        await cache.saveCache([ndkPath], ndkCacheKey)
-      }
+      await ndkResolve(qpmFilePath, qpmBinaryPath!, cachePath, parameters)
     }
 
     // Update version
