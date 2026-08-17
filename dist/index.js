@@ -57468,6 +57468,8 @@ async function doPublish(octokit, release, debug, qmod, version, tag, package_pa
     core.info(`Using version ${version} for publishing`);
     const branch = `version/v${version.replace(/\./g, '_')}`;
     qpmSharedFile.config.info.additionalData.branchName = branch;
+    // assign to current github repo
+    qpmSharedFile.config.info.url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
     const additionalData = qpmSharedFile.config.info.additionalData;
     const download = getReleaseDownloadLink(github.context.repo.owner, github.context.repo.repo, tag ?? version);
     const fileId = qpmSharedFile.config.info.id;

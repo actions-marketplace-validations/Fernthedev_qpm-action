@@ -36,6 +36,8 @@ async function doPublish(
 
   const branch = `version/v${version.replace(/\./g, '_')}`
   qpmSharedFile.config.info.additionalData.branchName = branch
+  // assign to current github repo
+  qpmSharedFile.config.info.url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`
 
   const additionalData = qpmSharedFile.config.info.additionalData
 

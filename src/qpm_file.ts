@@ -10,6 +10,7 @@ export interface QPMPackage {
     name: string
     id: string
     version: string
+    url: string
     additionalData: {
       branchName?: string
       headersOnly?: boolean
